@@ -27,7 +27,7 @@ pub enum Producer<B: BlockTrait> {
     DeltaLake(DeltaLakeProducer),
     #[cfg(feature = "pubsub")]
     #[strum(serialize = "Pubsub-Producer")]
-    PubSub(PubSubProducer)
+    PubSub(PubSubProducer),
 }
 
 #[async_trait]
@@ -52,13 +52,13 @@ pub async fn create_producer<B: BlockTrait>(
             info!("Setting up DeltaLake Producer");
             let producer = DeltaLakeProducer::new(cfg).await?;
             Ok(Producer::DeltaLake(producer))
-        },
+        }
         #[cfg(feature = "pubsub")]
         "pubsub" => {
             info!("Setting up PubSub Producer");
             let producer = PubSubProducer::new().await?;
             Ok(Producer::PubSub(producer))
-        },
+        }
         _ => {
             info!("Unknown Producer type, using stdout as Producer");
             let producer = StdOutProducer::new();
