@@ -5,19 +5,22 @@ use google_cloud_pubsub::publisher::{Publisher};
 use serde::{Deserialize, Serialize};
 use common_libs::async_trait::async_trait;
 use common_libs::envy;
+use common_libs::log::info;
 use crate::core::ProducerTrait;
 use crate::proto::BlockTrait;
 
 #[derive(Serialize, Deserialize)]
 struct PubSubConfig {
-    topic: String,
-    ordering_key: Option<String>,
+    pubsub_topic: String,
+    pubsub_ordering_key: Option<String>,
+    pubsub_compression: bool,
 }
 
 #[derive(Clone)]
 pub struct PubSubProducer {
     ordering_key: Option<String>,
     publisher: Publisher,
+    compression: bool,
 }
 
 impl PubSubProducer {
@@ -28,21 +31,22 @@ impl PubSubProducer {
             .await
             .map_err(|e| ProducerError::Initialization(e.to_string()))?;
         let client = Client::new(config).await.map_err(|e| ProducerError::Initialization(e.to_string()))?;
-        let topic = client.topic(&env_conf.topic);
+        let topic = client.topic(&env_conf.pubsub_topic);
         match topic.exists(None).await {
             Ok(status) => {
                 if !status {
                     topic.create(None, None).await
-                        .map_err(|_| ProducerError::Initialization(format!("create topic {} error", env_conf.topic)))?;
+                        .map_err(|_| ProducerError::Initialization(format!("create topic {} error", env_conf.pubsub_topic)))?;
                 }
                 let publisher = topic.new_publisher(None);
                 Ok(Self {
-                    ordering_key: env_conf.ordering_key,
+                    ordering_key: env_conf.pubsub_ordering_key,
                     publisher,
+                    compression: env_conf.pubsub_compression,
                 })
             }
             _ => {
-                return Err(ProducerError::Initialization(format!("check topic {} error", env_conf.topic)));
+                return Err(ProducerError::Initialization(format!("check topic {} error", env_conf.pubsub_topic)));
             }
         }
     }
@@ -53,7 +57,7 @@ impl PubSubProducer {
             ..Default::default()
         };
 
-        if cfg!(feature = "pubsub_compress") {
+        if self.compression {
             let block_compressed = lz4::block::compress(block.encode_to_vec().as_slice(), None, true)
                 .map_err(|e| ProducerError::Publish(e.to_string()))?;
             message.data = block_compressed
@@ -62,7 +66,8 @@ impl PubSubProducer {
         if self.ordering_key.is_some() {
             message.ordering_key = self.ordering_key.clone().unwrap()
         }
-        self.publisher.publish(message).await;
+        let awaiter = self.publisher.publish(message).await;
+        awaiter.get().await.map_err(|_| ProducerError::Publish("publish error".to_string()))?;
         Ok(())
     }
 }
