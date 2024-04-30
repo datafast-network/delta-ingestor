@@ -1,4 +1,4 @@
-use common_libs::deltalake::parquet::file::properties::WriterProperties;
+use deltalake::parquet::file::properties::WriterProperties;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -6,21 +6,21 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use common_libs::async_trait::async_trait;
-use common_libs::deltalake::arrow::array::*;
-use common_libs::deltalake::arrow::datatypes::Schema as ArrowSchema;
-use common_libs::deltalake::operations::create::CreateBuilder;
-use common_libs::deltalake::schema::Schema;
-use common_libs::deltalake::schema::SchemaDataType;
-use common_libs::deltalake::writer::DeltaWriter;
-use common_libs::deltalake::writer::RecordBatchWriter;
-use common_libs::deltalake::DeltaConfigKey;
-use common_libs::deltalake::DeltaTable;
-use common_libs::deltalake::DeltaTableBuilder;
-use common_libs::deltalake::DeltaTableError;
-use common_libs::deltalake::SchemaField;
 use common_libs::envy;
 use common_libs::log::info;
 use common_libs::tokio::sync::Mutex;
+use deltalake::arrow::array::*;
+use deltalake::arrow::datatypes::Schema as ArrowSchema;
+use deltalake::operations::create::CreateBuilder;
+use deltalake::schema::Schema;
+use deltalake::schema::SchemaDataType;
+use deltalake::writer::DeltaWriter;
+use deltalake::writer::RecordBatchWriter;
+use deltalake::DeltaConfigKey;
+use deltalake::DeltaTable;
+use deltalake::DeltaTableBuilder;
+use deltalake::DeltaTableError;
+use deltalake::SchemaField;
 
 use crate::config::CommandConfig;
 use crate::core::ProducerTrait;
@@ -122,7 +122,7 @@ impl DeltaLakeProducer {
 
         let writer = RecordBatchWriter::for_table(&table)?.with_writer_properties(
             WriterProperties::builder()
-                .set_compression(common_libs::deltalake::parquet::basic::Compression::LZ4)
+                .set_compression(deltalake::parquet::basic::Compression::LZ4)
                 .build(),
         );
         let delta_lake_client = Self {
