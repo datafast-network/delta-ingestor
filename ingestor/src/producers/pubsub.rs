@@ -1,12 +1,12 @@
-use google_cloud_googleapis::pubsub::v1::PubsubMessage;
-use google_cloud_pubsub::client::{Client, ClientConfig};
+use crate::core::ProducerTrait;
 use crate::errors::ProducerError;
-use google_cloud_pubsub::publisher::{Publisher};
-use serde::{Deserialize, Serialize};
+use crate::proto::BlockTrait;
 use common_libs::async_trait::async_trait;
 use common_libs::envy;
-use crate::core::ProducerTrait;
-use crate::proto::BlockTrait;
+use google_cloud_googleapis::pubsub::v1::PubsubMessage;
+use google_cloud_pubsub::client::{Client, ClientConfig};
+use google_cloud_pubsub::publisher::Publisher;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 struct PubSubConfig {
@@ -29,13 +29,19 @@ impl PubSubProducer {
             .with_auth()
             .await
             .map_err(|e| ProducerError::Initialization(e.to_string()))?;
-        let client = Client::new(config).await.map_err(|e| ProducerError::Initialization(e.to_string()))?;
+        let client = Client::new(config)
+            .await
+            .map_err(|e| ProducerError::Initialization(e.to_string()))?;
         let topic = client.topic(&env_conf.pubsub_topic);
         match topic.exists(None).await {
             Ok(status) => {
                 if !status {
-                    topic.create(None, None).await
-                        .map_err(|_| ProducerError::Initialization(format!("create topic {} error", env_conf.pubsub_topic)))?;
+                    topic.create(None, None).await.map_err(|_| {
+                        ProducerError::Initialization(format!(
+                            "create topic {} error",
+                            env_conf.pubsub_topic
+                        ))
+                    })?;
                 }
                 let publisher = topic.new_publisher(None);
                 Ok(Self {
@@ -45,7 +51,10 @@ impl PubSubProducer {
                 })
             }
             _ => {
-                return Err(ProducerError::Initialization(format!("check topic {} error", env_conf.pubsub_topic)));
+                return Err(ProducerError::Initialization(format!(
+                    "check topic {} error",
+                    env_conf.pubsub_topic
+                )));
             }
         }
     }
@@ -57,8 +66,9 @@ impl PubSubProducer {
         };
 
         if self.compression {
-            let block_compressed = lz4::block::compress(block.encode_to_vec().as_slice(), None, true)
-                .map_err(|e| ProducerError::Publish(e.to_string()))?;
+            let block_compressed =
+                lz4::block::compress(block.encode_to_vec().as_slice(), None, true)
+                    .map_err(|e| ProducerError::Publish(e.to_string()))?;
             message.data = block_compressed
         }
 
@@ -66,7 +76,10 @@ impl PubSubProducer {
             message.ordering_key = self.ordering_key.clone().unwrap()
         }
         let awaiter = self.publisher.publish(message).await;
-        awaiter.get().await.map_err(|_| ProducerError::Publish("publish error".to_string()))?;
+        awaiter
+            .get()
+            .await
+            .map_err(|_| ProducerError::Publish("publish error".to_string()))?;
         Ok(())
     }
 }

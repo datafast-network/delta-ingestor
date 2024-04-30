@@ -6,6 +6,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use common_libs::async_trait::async_trait;
+use common_libs::envy;
+use common_libs::log::info;
+use common_libs::tokio::sync::Mutex;
 use deltalake::arrow::array::*;
 use deltalake::arrow::datatypes::Schema as ArrowSchema;
 use deltalake::operations::create::CreateBuilder;
@@ -18,9 +21,6 @@ use deltalake::DeltaTable;
 use deltalake::DeltaTableBuilder;
 use deltalake::DeltaTableError;
 use deltalake::SchemaField;
-use common_libs::envy;
-use common_libs::log::info;
-use common_libs::tokio::sync::Mutex;
 
 use crate::config::CommandConfig;
 use crate::core::ProducerTrait;
