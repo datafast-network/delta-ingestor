@@ -743,7 +743,6 @@ dependencies = [
  "bytes",
  "clap",
  "crossbeam-queue",
- "deltalake",
  "env_logger",
  "envy",
  "flume",
@@ -1823,6 +1822,7 @@ version = "0.1.0"
 dependencies = [
  "comfy-table",
  "common_libs",
+ "deltalake",
  "google-cloud-googleapis",
  "google-cloud-pubsub",
  "lazy_static",
