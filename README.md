@@ -1002,3 +1002,40 @@ where
     BLOCK_SIZE: max block-size in the download range
     2: safety factor
 ```
+
+### PubSub Producer Feature
+
+Config:
+
+```rust
+#[derive(Serialize, Deserialize)]
+struct PubSubConfig {
+    pubsub_topic: String,
+    pubsub_ordering_key: Option<String>,
+    pubsub_compression: bool, //Compress message data with lz4
+}
+```
+
+Env
+```shell
+export pubsub_topic=example
+export pubsub_ordering_key=example_eth
+export pubsub_compression=false/true
+```
+
+Run
+```shell
+cargo build --release -F pubsub
+
+./target/release/ingestor \
+--start-block 12369611 \
+--batch 10 \
+--task-limit 10 \
+--channel-size 2 \
+--block-partition 100000 \
+--config secrets/ethereum.toml \
+--request-timeout 50 \
+--producer pubsub \
+--resumer redis://localhost:6379
+
+```

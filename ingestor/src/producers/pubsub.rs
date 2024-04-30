@@ -5,7 +5,6 @@ use google_cloud_pubsub::publisher::{Publisher};
 use serde::{Deserialize, Serialize};
 use common_libs::async_trait::async_trait;
 use common_libs::envy;
-use common_libs::log::info;
 use crate::core::ProducerTrait;
 use crate::proto::BlockTrait;
 
