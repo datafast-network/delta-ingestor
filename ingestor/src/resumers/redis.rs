@@ -2,7 +2,7 @@ use crate::core::ResumerTrait;
 use crate::errors::ResumerError;
 use crate::proto::BlockTrait;
 use common_libs::async_trait::async_trait;
-use common_libs::redis::aio::Connection;
+use common_libs::redis::aio::MultiplexedConnection;
 use common_libs::redis::AsyncCommands;
 use common_libs::redis::Client;
 use std::collections::HashMap;
@@ -25,9 +25,9 @@ impl RedisStore {
         Ok(store)
     }
 
-    async fn get_con(&self) -> Result<Connection, ResumerError> {
+    async fn get_con(&self) -> Result<MultiplexedConnection, ResumerError> {
         self.client
-            .get_async_connection()
+            .get_multiplexed_tokio_connection()
             .await
             .map_err(|e| ResumerError::OperationFailed(e.to_string()))
     }

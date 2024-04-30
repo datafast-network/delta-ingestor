@@ -1,6 +1,9 @@
 mod delta;
 mod stdout;
 
+#[cfg(feature = "pubsub")]
+mod pubsub;
+
 use delta::DeltaLakeProducer;
 use stdout::StdOutProducer;
 use strum::Display;
@@ -13,6 +16,8 @@ use crate::proto::BlockTrait;
 
 use common_libs::async_trait::async_trait;
 use common_libs::log::info;
+#[cfg(feature = "pubsub")]
+use pubsub::PubSubProducer;
 
 #[derive(Display)]
 pub enum Producer<B: BlockTrait> {
@@ -20,6 +25,9 @@ pub enum Producer<B: BlockTrait> {
     StdOut(StdOutProducer<B>),
     #[strum(serialize = "Delta-Producer")]
     DeltaLake(DeltaLakeProducer),
+    #[cfg(feature = "pubsub")]
+    #[strum(serialize = "Pubsub-Producer")]
+    PubSub(PubSubProducer),
 }
 
 #[async_trait]
@@ -28,6 +36,8 @@ impl<B: BlockTrait> ProducerTrait<B> for Producer<B> {
         match self {
             Producer::StdOut(producer) => producer.publish_blocks(blocks).await,
             Producer::DeltaLake(producer) => producer.publish_blocks(blocks).await,
+            #[cfg(feature = "pubsub")]
+            Producer::PubSub(producer) => producer.publish_blocks(blocks).await,
         }
     }
 }
@@ -42,6 +52,12 @@ pub async fn create_producer<B: BlockTrait>(
             info!("Setting up DeltaLake Producer");
             let producer = DeltaLakeProducer::new(cfg).await?;
             Ok(Producer::DeltaLake(producer))
+        }
+        #[cfg(feature = "pubsub")]
+        "pubsub" => {
+            info!("Setting up PubSub Producer");
+            let producer = PubSubProducer::new().await?;
+            Ok(Producer::PubSub(producer))
         }
         _ => {
             info!("Unknown Producer type, using stdout as Producer");

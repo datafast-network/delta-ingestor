@@ -6,7 +6,7 @@ use common_libs::async_trait::async_trait;
 use common_libs::clap;
 use common_libs::clap::Parser;
 use common_libs::log;
-use common_libs::redis::aio::Connection;
+use common_libs::redis::aio::MultiplexedConnection;
 use common_libs::redis::AsyncCommands;
 use common_libs::redis::Client;
 use common_libs::redis::RedisError;
@@ -165,10 +165,10 @@ impl Config {
         Ok(store)
     }
 
-    async fn get_con(&self) -> Result<Option<Connection>, ConfigStoreError> {
+    async fn get_con(&self) -> Result<Option<MultiplexedConnection>, ConfigStoreError> {
         if let Some(redis) = self.redis.clone() {
             let conn = redis
-                .get_async_connection()
+                .get_multiplexed_tokio_connection()
                 .await
                 .map_err(|e| ConfigStoreError::Disconnected(e.to_string()))?;
             return Ok(Some(conn));
