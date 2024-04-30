@@ -3,7 +3,6 @@ pub use arrow_schema;
 pub use async_trait;
 pub use bytes;
 pub use clap;
-pub use deltalake;
 pub use env_logger;
 pub use envy;
 pub use flume;
